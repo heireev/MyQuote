@@ -2,11 +2,14 @@ package com.reev.myquote
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import android.view.View
+import android.widget.Toast
 import com.loopj.android.http.AsyncHttpClient
 import com.loopj.android.http.AsyncHttpResponseHandler
 import com.reev.myquote.databinding.ActivityMainBinding
 import cz.msebera.android.httpclient.Header
+import org.json.JSONObject
 
 class MainActivity : AppCompatActivity() {
 
@@ -34,7 +37,22 @@ class MainActivity : AppCompatActivity() {
                 responseBody: ByteArray?
             ) {
                 //jika koneksi berhasil
-                TODO("Not yet implemented")
+                binding.progressBar.visibility = View.INVISIBLE
+
+                val result = String(responseBody!!)
+                Log.d(TAG, result)
+                try {
+                    val responseObject = JSONObject(result)
+
+                    val quote = responseObject.getString("en")
+                    val author = responseObject.getString("author")
+
+                    binding.tvQuote.text = quote
+                    binding.tvAuthor.text = author
+                } catch (e: Exception) {
+                    Toast.makeText(this@MainActivity, e.message, Toast.LENGTH_SHORT).show()
+                    e.printStackTrace()
+                }
             }
 
             override fun onFailure(
@@ -44,7 +62,15 @@ class MainActivity : AppCompatActivity() {
                 error: Throwable?
             ) {
                 //jika koneksi gagal
-                TODO("Not yet implemented")
+                binding.progressBar.visibility = View.INVISIBLE
+
+                val errorMessage = when (statusCode) {
+                    401 -> "$statusCode : Bad Request"
+                    403 -> "$statusCode : Forbidden"
+                    404 -> "$statusCode : Not Found"
+                    else -> "$statusCode : ${error?.message}"
+                }
+                Toast.makeText(this@MainActivity, errorMessage, Toast.LENGTH_SHORT).show()
             }
         })
     }
